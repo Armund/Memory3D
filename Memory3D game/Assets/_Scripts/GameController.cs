@@ -8,14 +8,14 @@ public class GameController : MonoBehaviour {
 	public Sprite[] cardPictures = new Sprite[5];
 
 	// Game UI
-	public Sprite heartEmpty;
-	public Image[] hitPoints = new Image[5];
-	public Text scoreText;
+	public GameUI gameUI;
 
 	private GameObject[] cards = new GameObject[15];
 
+	//public static int record;
 	private int score = 0;
 	private int lives = 5;
+	private int cardSetsLeft = 5;
 
 	private int combo = 0;
 	private int currentCardValue = -1;
@@ -33,15 +33,20 @@ public class GameController : MonoBehaviour {
 	// Update is called once per frame
 	void Update() {
 
-		if (Input.GetButtonDown("Fire1")) {
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-			RaycastHit hit;
+		//if (Input.GetButtonDown("Fire1")) {
+		if (Input.touchCount > 0) {
+			Touch touch = Input.GetTouch(0);
+			//Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+			if (touch.phase == TouchPhase.Began) {
+				Ray ray = Camera.main.ScreenPointToRay(touch.position);
+				//RaycastHit hit;
 
-			if (Physics.Raycast(ray, out hit)) {
-				GameObject gameObject = hit.collider.gameObject;
-				CardScript hittenCard = gameObject.GetComponent<CardScript>();
-				if (gameObject.CompareTag("Card") && isActive && !hittenCard.IsStateUp) {
-					TapCard(hittenCard);
+				if (Physics.Raycast(ray, out RaycastHit hit)) {
+					GameObject gameObject = hit.collider.gameObject;
+					CardScript hittenCard = gameObject.GetComponent<CardScript>();
+					if (gameObject.CompareTag("Card") && isActive && !hittenCard.IsStateUp) {
+						TapCard(hittenCard);
+					}
 				}
 			}
 		}
@@ -81,15 +86,18 @@ public class GameController : MonoBehaviour {
 			if (tappedCard.value == currentCardValue) { // если новая карта совпадает с предыдущей
 				if (combo == 2) {
 					StartCoroutine(DelayedTurnCards(true));
+					cardSetsLeft--;
 				}
-
 				UpdatePointsAndLives(true);
 			} else { // если не совпадает
 				StartCoroutine(DelayedTurnCards(false));
 				UpdatePointsAndLives(false);
 			}
 		}
-		Debug.Log("HP:" + lives + " Score:" + score + " combo:" + combo + " ");
+		if (IsGameOver()) {
+			isActive = false;
+			gameUI.GameOver(cardSetsLeft == 0, score);
+		}
 	}
 
 	void UpdatePointsAndLives(bool isSuccess) {
@@ -103,12 +111,18 @@ public class GameController : MonoBehaviour {
 			} else {
 				combo++;
 			}
-			scoreText.text = score.ToString();
+			gameUI.UpdateScore(score);
+			//scoreText.text = score.ToString();
 		} else {
 			combo = 0;
 			lives--;
-			hitPoints[lives].sprite = heartEmpty;
+			gameUI.UpdateHP(lives);
+			//hitPoints[lives].sprite = heartEmpty;
 		}
+	}
+
+	private bool IsGameOver() {
+		return lives == 0 || cardSetsLeft == 0;
 	}
 
 	IEnumerator TurnCards() {
