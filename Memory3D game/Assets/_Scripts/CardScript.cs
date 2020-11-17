@@ -8,16 +8,16 @@ public class CardScript : MonoBehaviour
 	public Image picture;
 	public int value;
 
-	private bool stateUp = true;
+	public bool IsStateUp = true;
 	private Animation turnAnimation;
 
 	public void Turn() {
-		if (stateUp) {
+		if (IsStateUp) {
 			turnAnimation.Play("TurnDownAnimation");
 		} else {
 			turnAnimation.Play("TurnUpAnimation");
 		}
-		stateUp = !stateUp;
+		IsStateUp = !IsStateUp;
 	}
 
  
